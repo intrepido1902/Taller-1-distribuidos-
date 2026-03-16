@@ -1,0 +1,30 @@
+import java.io.*;
+import java.net.*;
+import java.net.InetAddress;
+public class OperadorRestas {
+    public static void main(String[] args) throws Exception {
+        // Crea el servidor de escucha en el puerto 7000
+        ServerSocket welcomeSocket = new ServerSocket(7000, 50, InetAddress.getByName("0.0.0.0"));
+        System.out.println(">>> OPERADOR 1 (RESTAS) INICIADO EN PUERTO 7000 <<<");
+ 
+        while(true) {
+            Socket connectionSocket = welcomeSocket.accept();
+            BufferedReader in = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
+            DataOutputStream out = new DataOutputStream(connectionSocket.getOutputStream());
+ 
+            // Recibe x1,y1,x2,y2
+            String entrada = in.readLine();
+            String[] d = entrada.split(",");
+           
+            // Operación: y2 - y1 y x2 - x1
+            double dy = Double.parseDouble(d[3]) - Double.parseDouble(d[1]);
+            double dx = Double.parseDouble(d[2]) - Double.parseDouble(d[0]);
+ 
+            // Retorna los dos resultados parciales separados por coma
+            out.writeBytes(dy + "," + dx + "\n");
+            System.out.println("Calculado: dy=" + dy + ", dx=" + dx);
+            connectionSocket.close();
+        }
+    }
+}
+   
