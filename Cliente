@@ -1,0 +1,23 @@
+import java.io.*;
+import java.net.*;
+ 
+public class Cliente {
+    public static void main(String[] args) throws Exception {
+        BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
+       
+        System.out.println("--- CÁLCULO DISTRIBUIDO DE LA PENDIENTE ---");
+        System.out.print("Ingrese x1,y1,x2,y2 (separados por coma): ");
+        String datos = teclado.readLine();
+ 
+        // REEMPLAZAR "localhost" por la IP de la VM del Servidor de Cálculo
+        Socket s = new Socket("10.43.100.41", 6789);
+        DataOutputStream out = new DataOutputStream(s.getOutputStream());
+        BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+ 
+        out.writeBytes(datos + "\n");
+        String respuesta = in.readLine();
+       
+        System.out.println("RESPUESTA DEL SISTEMA: " + respuesta);
+        s.close();
+    }
+}
