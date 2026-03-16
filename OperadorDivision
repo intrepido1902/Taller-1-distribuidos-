@@ -1,0 +1,34 @@
+import java.io.*;
+import java.net.*;
+
+public class OperadorDivision {
+    public static void main(String[] args) throws Exception {
+        ServerSocket welcomeSocket = new ServerSocket(7001, 50, InetAddress.getByName("0.0.0.0"));
+        System.out.println(">>> OPERADOR 2 (DIVISIÓN) INICIADO EN PUERTO 7001 <<<");
+
+        while(true) {
+            Socket connectionSocket = welcomeSocket.accept();
+            BufferedReader in = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
+            DataOutputStream out = new DataOutputStream(connectionSocket.getOutputStream());
+
+            // Recibe dy,dx
+            String[] d = in.readLine().split(",");
+            double dy = Double.parseDouble(d[0]);
+            double dx = Double.parseDouble(d[1]);
+
+            // Cálculo final de la pendiente m
+            if (dx == 0) {
+                out.writeBytes("Indefinida (División por cero)\n");
+            } else {
+                double m = dy / dx;
+                out.writeBytes(m + "\n");
+            }
+            
+           
+            out.writeBytes(dy + "," + dx + "\n");
+             System.out.println("calculado: dy=" + dy + ", dx=" + dx);
+
+            connectionSocket.close();
+        }
+    }
+}
