@@ -1,0 +1,119 @@
+import java.io.*;
+import java.net.*;
+import java.net.InetSocketAddress;
+
+public class ServidorCalculo {
+
+    public static void main(String[] args) throws Exception {
+
+        ServerSocket principal = new ServerSocket(6789, 50, InetAddress.getByName("0.0.0.0"));
+        System.out.println(">>> SERVIDOR DE CÁLCULO ACTIVO (PUERTO 6789) <<<");
+
+        while (true) {
+
+            Socket cliente = principal.accept();
+            BufferedReader inC = new BufferedReader(new InputStreamReader(cliente.getInputStream()));
+            DataOutputStream outC = new DataOutputStream(cliente.getOutputStream());
+
+            String datosCoordenadas = inC.readLine();
+            System.out.println("Solicitud recibida: " + datosCoordenadas);
+
+
+
+            String resultadosRestas;
+
+            try {
+                // RESTAS PRINCIPAL
+                resultadosRestas = llamarOperador("10.43.99.32", 7000, datosCoordenadas);
+            } catch (Exception e1) {
+                System.out.println("Restas principal caída, usando respaldo...");
+                try {
+                    // RESTAS RESPALDO
+                    resultadosRestas = llamarOperador("10.43.99.50", 7002, datosCoordenadas);
+                } catch (Exception e2) {
+                    System.out.println("Restas respaldo también caída, usando CÁLCULO LOCAL...");
+                    resultadosRestas = restasLocal(datosCoordenadas); // dy,dx
+                }
+            }
+
+
+            String resultadoFinalM;
+
+            try {
+                // DIVISIÓN PRINCIPAL
+                resultadoFinalM = llamarOperador("10.43.99.94", 7001, resultadosRestas);
+            } catch (Exception e1) {
+                System.out.println("División principal caída, usando respaldo...");
+                try {
+                    // DIVISIÓN RESPALDO
+                    resultadoFinalM = llamarOperador("10.43.99.60", 7003, resultadosRestas);
+                } catch (Exception e2) {
+                    System.out.println("División respaldo también caída, usando CÁLCULO LOCAL...");
+                    resultadoFinalM = divisionLocal(resultadosRestas); // m o "Indefinida..."
+                }
+            }
+
+
+
+            outC.writeBytes("La pendiente m es: " + resultadoFinalM + "\n");
+            System.out.println("Resultado enviado al cliente.");
+
+            cliente.close();
+        }
+    }
+
+
+    private static String llamarOperador(String ip, int puerto, String data) throws Exception {
+        Socket s = new Socket();
+
+        // Timeout de 2 segundos
+        s.connect(new InetSocketAddress(ip, puerto), 2000);
+
+        DataOutputStream out = new DataOutputStream(s.getOutputStream());
+        out.writeBytes(data + "\n");
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+        String res = in.readLine();
+
+        s.close();
+        return res;
+    }
+
+
+    private static String restasLocal(String datosCoordenadas) {
+        try {
+            String[] d = datosCoordenadas.split(",");
+            if (d.length != 4) return "ERROR_FORMATO";
+
+            double x1 = Double.parseDouble(d[0].trim());
+            double y1 = Double.parseDouble(d[1].trim());
+            double x2 = Double.parseDouble(d[2].trim());
+            double y2 = Double.parseDouble(d[3].trim());
+
+            double dy = y2 - y1;
+            double dx = x2 - x1;
+
+            return dy + "," + dx;
+        } catch (Exception e) {
+            return "ERROR_FORMATO";
+        }
+    }
+
+
+    private static String divisionLocal(String resultadosRestas) {
+        try {
+            String[] d = resultadosRestas.split(",");
+            if (d.length != 2) return "ERROR_FORMATO";
+
+            double dy = Double.parseDouble(d[0].trim());
+            double dx = Double.parseDouble(d[1].trim());
+
+            if (dx == 0) return "Indefinida (División por cero)";
+
+            double m = dy / dx;
+            return String.valueOf(m);
+        } catch (Exception e) {
+            return "ERROR_FORMATO";
+        }
+    }
+}
